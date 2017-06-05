@@ -8,34 +8,44 @@ import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.input.SAXBuilder;
 
+import zplus2.dao.EmptyData;
+import zplus2.dao.Item;
+import zplus2.dao.ListData;
+import zplus2.util.Log;
+
 public class ReadErrCodeConf {
-	private String preValue="0";
-	private String start="0";
-	private String end="9999";
 	
-	@SuppressWarnings({ "rawtypes", "unchecked" })
-	public List readXML(File codeMapFile) throws Exception {
-		List list = new ArrayList();
+	public List<EmptyData> readXML(File codeMapFile) throws Exception {
+		List<EmptyData> list = new ArrayList<EmptyData>();
 		SAXBuilder builder = new SAXBuilder();    
 		Document doc = builder.build(codeMapFile);    
 		Element root = doc.getRootElement();    
-		start = root.getAttributeValue("start");
-		end = root.getAttributeValue("end");
 		validateListCode(root);//验证分类节点划定的错误码范围是否有重叠、越界的问题
-		List allChildren = root.getChildren();    
+		//保存基准值，下个一个item的值应在该值基础上 + 1；
+		int baseValue=getInt(root.getAttributeValue("start"))-1;
+		@SuppressWarnings("unchecked")
+		List<Element> allChildren = root.getChildren();    
 		for(int i=0;i<allChildren.size();i++) {
-			Element e = (Element)allChildren.get(i);
+			Element e = allChildren.get(i);
 			String nodeName = e.getName();
 			if("item".equals(nodeName)){
-				addItem(e,list);
+				addItem(e,baseValue,root,list);
+				baseValue = getInt(list.get(list.size()-1).getValue());
 			}else{
+				validateStart(baseValue,e);
 				addListData(e,list);
+				baseValue=getInt(e.getAttributeValue("end"));
 			}
 		}   
 		return list;
 	}
 
-	
+	private void validateStart(int baseValue, Element e) throws Exception {
+		if(getInt(e.getAttributeValue("start"))<=baseValue){
+			throw new Exception("节点["+e.getAttributeValue("id")+"]start属性的值小于前一个item的值");
+		}
+	}
+
 	@SuppressWarnings("unchecked")
 	private void validateListCode(Element element) throws Exception {
 		String parentStart = element.getAttributeValue("start");
@@ -101,56 +111,53 @@ public class ReadErrCodeConf {
 		}
 	}
 	
-	@SuppressWarnings({ "rawtypes", "unchecked" })
-	private void addListData(Element e, List list) throws Exception {
+	private void addListData(Element e, List<EmptyData> list) throws Exception {
 		ListData listData = new ListData();
 		listData.setId(e.getAttributeValue("id"));
 		listData.setStart(e.getAttributeValue("start"));
 		listData.setEnd(e.getAttributeValue("end"));
 		listData.setLabel(e.getAttributeValue("label"));
 		
-		this.start = e.getAttributeValue("start");
-		this.end = e.getAttributeValue("end");
-		this.preValue = String.valueOf(Integer.parseInt(this.start)-1);
-		
-		List listItem = new ArrayList();
+		List<EmptyData> listItem = new ArrayList<EmptyData>();
 		listData.setList(listItem);
-		List allChildren =e.getChildren();
+		@SuppressWarnings("unchecked")
+		List<Element> allChildren =e.getChildren();
+		int baseValue = getInt(e.getAttributeValue("start"))-1;
 		for(int i=0;i<allChildren.size();i++) {
 			Element subE = (Element)allChildren.get(i);
 			String nodeName = subE.getName();
 			if("item".equals(nodeName)){
-				try {
-					addItem(subE,listItem);
-				} catch (Exception e1) {
-					throw new Exception("["+subE.getAttributeValue("msg")+"]的错误码越界。");
-				}
+				addItem(subE,baseValue,e,listItem);
+				baseValue = getInt(listItem.get(listItem.size()-1).getValue());
 			}else{
+				validateStart(baseValue,subE);
 				addListData(subE, listItem);
+				baseValue=getInt(subE.getAttributeValue("end"));
 			}
 		}
 		list.add(listData);
 	}
 
-	private void addItem(Element e, List<Item> list) throws Exception {
+	private void addItem(Element e, int baseValue,Element parentElement,List<EmptyData> list) throws Exception {
 		Item item = new Item();
 		item.setId(e.getAttributeValue("id"));
 		item.setMsg(e.getAttributeValue("msg"));
-		String value = getValue(e.getAttributeValue("value"));
-		item.setValue(value);
+		item.setValue(getValue(e,baseValue,parentElement,list));
 		list.add(item);
 	}
 	
-	private String getValue(String attributeValue) throws Exception {
-		if(attributeValue==null){
-			preValue =String.valueOf(getInt(preValue)+1);
-		}else{
-			preValue = attributeValue;
+	private String getValue(Element selfElement,int baseValue,Element parentElement,List<EmptyData> list) throws Exception {
+		String start = parentElement.getAttributeValue("start");
+		String end = parentElement.getAttributeValue("end");
+		String attributeValue=selfElement.getAttributeValue("value");
+		if(attributeValue==null || "".equals(attributeValue)){
+			attributeValue = String.valueOf(baseValue+1);
 		}
-		if(getInt(preValue)<getInt(start) || getInt(preValue)>getInt(end) ){
-			throw new Exception("错误码编号越界");
+		Log.debug("节点["+selfElement.getAttributeValue("id")+"]的值["+attributeValue+"]");
+		if(getInt(attributeValue)<getInt(start) || getInt(attributeValue)>getInt(end) ){
+			throw new Exception("id为["+selfElement.getAttributeValue("id")+"]的错误码编号值["+attributeValue+"]越父节点["+parentElement.getAttributeValue("id")+"]的界限");
 		}
-		return preValue;
+		return attributeValue;
 	}
 	private int getInt(String value){
 		return Integer.parseInt(value);

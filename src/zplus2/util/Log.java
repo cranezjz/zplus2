@@ -1,9 +1,13 @@
-package zplus2;
+package zplus2.util;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.OutputStreamWriter;
+import java.io.PrintStream;
 import java.util.Date;
+
+import zplus2.MyConsole;
 
 public class Log {
 	/**
@@ -16,6 +20,12 @@ public class Log {
 	private static int level = 0;
 	private static String appender = "console";//console;file
 	private static String logFileName = "c:/logs/zplus.log";
+	
+	public static final int debug = 0;
+	public static final int trace = 1;
+	public static final int info = 2;
+	public static final int warning = 3;
+	public static final int error = 4;
 	
 	private  static void log(String msg,int curLevel){
 		if(curLevel>=level){
@@ -31,7 +41,11 @@ public class Log {
 				}catch (Exception e) {
 				}
 			}else{
-				MyConsole.printToConsole(timeStr+" " +msg);		
+				if(level>Log.debug){
+					MyConsole.printToConsole(timeStr+" " +msg,true);		
+				}else{
+					MyConsole.printToConsole(timeStr+" " +msg,false);		
+				}
 			}
 		}
 	}
@@ -64,11 +78,15 @@ public class Log {
 	public static void warning(String msg){
 		log(msg, 3);
 	}
-	public static void error(String msg){
-		log(msg, 4);
+	public static void error(String msg,Throwable e){
+		ByteArrayOutputStream out = new ByteArrayOutputStream();
+		e.printStackTrace(new PrintStream(out));
+		log(msg+System.getProperty("line.separator")+out.toString(), 4);
 	}
-	public static void fatal(String msg){
-		log(msg, 5);
+	public static void fatal(String msg,Throwable e){
+		ByteArrayOutputStream out = new ByteArrayOutputStream();
+		e.printStackTrace(new PrintStream(out));
+		log(msg+System.getProperty("line.separator")+out.toString(), 5);
 	}
 	public static void main(String[] args) {
 /*		Log.debug("11111");

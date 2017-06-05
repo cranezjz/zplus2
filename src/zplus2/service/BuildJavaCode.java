@@ -10,7 +10,11 @@ import java.util.List;
 import java.util.Map;
 
 import freemarker.template.Template;
-import zplus2.Log;
+import zplus2.dao.Item;
+import zplus2.dao.ListData;
+import zplus2.util.FreeMarkerUtil;
+import zplus2.util.Helper;
+import zplus2.util.Log;
 
 @SuppressWarnings({ "rawtypes", "unchecked" })
 public class BuildJavaCode {
@@ -43,7 +47,7 @@ public class BuildJavaCode {
 			buildJavaFromTemplate(templateFile,list);
 			buildTxtFromList(list);
 		} catch (Exception e) {
-			Log.error("文件构建失败！"+e.getMessage());
+			Log.error("文件构建失败！"+e.getMessage(),e);
 			//System.out.println("-->文件构建失败！"+e.getMessage());
 		}
 		
@@ -115,7 +119,7 @@ public class BuildJavaCode {
 			Log.debug("-->文件构建成功！"+separator+"-->java文件在["+javaSrcDir+"]目录中."+separator+"-->请刷新相应文件夹");
 		} catch (Exception e) {
 			e.printStackTrace();
-			Log.error("-->文件构建失败！"+e.getMessage());
+			Log.error("-->文件构建失败！"+e.getMessage(),e);
 		}
 		
 	}

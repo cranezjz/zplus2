@@ -1,4 +1,4 @@
-package zplus2.service;
+package zplus2.util;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -13,8 +13,6 @@ import java.util.Date;
 import java.util.Iterator;
 import java.util.Properties;
 import java.util.Stack;
-
-import zplus2.Log;
 
 public class Helper {
 	public static void main(String[] args) {

@@ -1,6 +1,6 @@
-package zplus2.service;
+package zplus2.dao;
 
-public class Item {
+public class Item  extends EmptyData{
 	private String id;
 	private String msg;
 	private String value;

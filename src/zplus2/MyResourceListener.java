@@ -11,6 +11,7 @@ import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.Platform;
 
 import zplus2.service.BuildJavaCode;
+import zplus2.util.Log;
 
 public class MyResourceListener implements IResourceChangeListener {
 	@Override

@@ -1,18 +1,18 @@
-package zplus2.service;
+package zplus2.dao;
 
 import java.util.List;
 
-@SuppressWarnings("rawtypes")
-public class ListData {
-	private List list;
+public class ListData extends EmptyData{
+	private List<EmptyData> list;
 	private String id;
 	private String start;
 	private String end;
 	private String label;
-	public List getList() {
+	
+	public List<EmptyData> getList() {
 		return list;
 	}
-	public void setList(List list) {
+	public void setList(List<EmptyData> list) {
 		this.list = list;
 	}
 	public String getId() {
@@ -43,6 +43,10 @@ public class ListData {
 	@Override
 	public String toString() {
 		return "ListData [list=" + list + ", id=" + id + ", start=" + start + ", end=" + end + "]";
+	}
+	@Override
+	public String getValue() {
+		return null;
 	}
 	
 	
